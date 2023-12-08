@@ -1,6 +1,3 @@
-import sys
-sys.path.append("/Users/jaffa/AppData/Local/Programs/Python/Python310/Lib/site-packages")
-
 import os
 import matplotlib.pyplot as plt
 import pandas as pd
