@@ -71,7 +71,7 @@ def plot_dataset_statistics(df, keep_plot_titles=False, print_stats=False):
     class_counts.plot(kind='bar', rot=0)
     if keep_plot_titles:
         plt.title('Class Distribution with Proportions')
-    plt.xlabel('Digit')
+    plt.xlabel('Digit Label')
     plt.ylabel('Sample Count')
     for i, count in enumerate(class_counts):
         plt.text(i, count + 15, f"{class_counts_norm[i]*100:.2f}%", ha='center')  # proportions
@@ -159,6 +159,28 @@ def plot_dataset_statistics(df, keep_plot_titles=False, print_stats=False):
     fig.savefig('./plots/stat_heatmap_pixel_mean_std_value_overall.png')
 
 
+def plot_ink_feature(digits, keep_plot_titles=False, print_stats=False):
+    # sum of ink on every row
+    ink_feature = np.array([sum(row) for row in digits])
+
+    ink_mean = [np.mean(ink_feature[labels == i]) for i in range(10)]  # mean for each digit class
+    ink_std = [np.std(ink_feature[labels == i]) for i in range(10)]  # std for each digit clas
+    ink_stats = pd.concat([pd.Series(ink_mean, name="mean"), pd.Series(ink_std, name="std")], axis=1)
+    if print_stats:
+        print(ink_stats)
+
+    # error bar with mean and standard deviation of ink feature
+    fig = plt.figure(figsize=(8, 6))
+    plt.errorbar(ink_stats.index, ink_stats['mean'], yerr=ink_stats['std'], fmt='o')
+    plt.xlabel('Digit Label')
+    plt.ylabel('Mean Ink')
+    if keep_plot_titles:
+        plt.title('Mean Ink with Standard Deviation by Digit Label')
+    plt.xticks(range(10))
+    #plt.show()
+    fig.savefig('./plots/ink.png')
+
+
 def plot_hog_feature(digits, digit_idx=30):
     # plot showing histogram of oriented gradients
     image = digits[digit_idx]
@@ -182,14 +204,9 @@ def plot_hog_feature(digits, digit_idx=30):
     plt.savefig('./plots/hog.png')
 
 
-def calculate_ink_feature(digits, print_stats=False):
+def calculate_ink_feature(digits):
     # sum of ink on every row
     ink_feature = np.array([sum(row) for row in digits])
-
-    if print_stats:
-        ink_mean = [np.mean(ink_feature[labels == i]) for i in range(10)]  # mean for each digit class
-        ink_std = [np.std(ink_feature[labels == i]) for i in range(10)]  # std for each digit class
-        print(pd.concat([pd.Series(ink_mean, name='Mean'), pd.Series(ink_std, name='Std')], axis=1))
 
     return scale(ink_feature).reshape(-1, 1)
 
@@ -295,7 +312,8 @@ labels = mnist_data[:, 0]
 digits = mnist_data[:, 1:]
 
 # ink feature only model
-ink_feature = calculate_ink_feature(digits, print_stats=True)
+ink_feature = calculate_ink_feature(digits)
+plot_ink_feature(digits)
 trained_ink_model = ink_model(labels, ink_feature)
 
 # ink and hog feature model
